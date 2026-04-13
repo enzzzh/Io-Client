@@ -12,6 +12,7 @@ build/
 *.iml
 *.ipr
 *.iws
+.settings
 
 # Log files
 *.log
@@ -30,5 +31,6 @@ build/
 
 /run/
 
+# insane :: primewk 13/04/26
 skid/
 /skid/

@@ -257,22 +257,23 @@ public class ClickGuiScreen extends Screen {
         }
 
         int contentHeight = 0;
+        int rowGap = PanelRenderer.getRowGap();
         List<Module> modules = ModuleManager.INSTANCE.getModulesByCategory(panel.category);
         for (Module module : modules) {
-            contentHeight += PanelRenderer.getModuleHeight();
+            contentHeight += PanelRenderer.getModuleHeight() + rowGap;
             if (!module.isExtended()) {
                 continue;
             }
 
             for (Setting setting : module.getSettings()) {
-                contentHeight += PanelRenderer.getSettingHeight();
+                contentHeight += PanelRenderer.getSettingHeight() + rowGap;
                 if (setting instanceof CategorySetting categorySetting && categorySetting.isExpanded()) {
-                    contentHeight += categorySetting.getSettings().size() * PanelRenderer.getSettingHeight();
+                    contentHeight += categorySetting.getSettings().size() * (PanelRenderer.getSettingHeight() + rowGap);
                 }
             }
         }
 
-        return PanelRenderer.getTitleBarHeight() + 2 + contentHeight;
+        return PanelRenderer.getTitleBarHeight() + PanelRenderer.getContentPadding() + Math.max(0, contentHeight - rowGap + PanelRenderer.getContentPadding());
     }
 
     private List<CategoryPanel> getOrderedPanels() {

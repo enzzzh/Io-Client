@@ -1,5 +1,10 @@
 package io.client;
 
+/* 10/02/24
+ Lev: we should goon up
+ prime: HELL YAH
+ */
+
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

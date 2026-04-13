@@ -13,10 +13,12 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 
 public class PanelRenderer {
-    private static int PANEL_WIDTH = 90;
-    private static int MODULE_HEIGHT = 10;
-    private static int SETTING_HEIGHT = 12;
-    private static int TITLE_BAR_HEIGHT = 13;
+    private static int PANEL_WIDTH = 102;
+    private static int MODULE_HEIGHT = 12;
+    private static int SETTING_HEIGHT = 13;
+    private static int TITLE_BAR_HEIGHT = 15;
+    private static int CONTENT_PADDING = 4;
+    private static int ROW_GAP = 2;
     private static float SCALE = 1.0f;
 
     private final Map<String, Float> textScrollOffsets = new HashMap<>();
@@ -28,10 +30,12 @@ public class PanelRenderer {
 
     public static void setScale(float scale) {
         SCALE = scale;
-        PANEL_WIDTH = (int) (90 * scale);
-        MODULE_HEIGHT = (int) (10 * scale);
-        SETTING_HEIGHT = (int) (12 * scale);
-        TITLE_BAR_HEIGHT = (int) (13 * scale);
+        PANEL_WIDTH = (int) (102 * scale);
+        MODULE_HEIGHT = (int) (12 * scale);
+        SETTING_HEIGHT = (int) (13 * scale);
+        TITLE_BAR_HEIGHT = (int) (15 * scale);
+        CONTENT_PADDING = Math.max(3, (int) (4 * scale));
+        ROW_GAP = Math.max(1, (int) (2 * scale));
     }
 
     public static int getPanelWidth() {
@@ -50,6 +54,14 @@ public class PanelRenderer {
         return SETTING_HEIGHT;
     }
 
+    public static int getContentPadding() {
+        return CONTENT_PADDING;
+    }
+
+    public static int getRowGap() {
+        return ROW_GAP;
+    }
+
     public void setTheme(Theme theme) {
         this.theme = theme;
     }
@@ -63,7 +75,7 @@ public class PanelRenderer {
 
         List<Module> modules = ModuleManager.INSTANCE.getModulesByCategory(panel.category);
         int contentHeight = calculateContentHeight(modules, panel.collapsed);
-        int actualHeight = panel.collapsed ? TITLE_BAR_HEIGHT : TITLE_BAR_HEIGHT + 2 + contentHeight;
+        int actualHeight = panel.collapsed ? TITLE_BAR_HEIGHT : TITLE_BAR_HEIGHT + CONTENT_PADDING + contentHeight;
 
         renderTitleBar(graphics, font, panel, mouseX, mouseY);
 
@@ -84,29 +96,32 @@ public class PanelRenderer {
             height += MODULE_HEIGHT;
             if (module.isExtended()) {
                 for (Setting setting : module.getSettings()) {
-                    height += SETTING_HEIGHT;
+                    height += SETTING_HEIGHT + ROW_GAP;
                     if (setting instanceof CategorySetting catSetting && catSetting.isExpanded()) {
-                        height += catSetting.getSettings().size() * SETTING_HEIGHT;
+                        height += catSetting.getSettings().size() * (SETTING_HEIGHT + ROW_GAP);
                     }
                 }
             }
+            height += ROW_GAP;
         }
-        return height;
+        return Math.max(0, height - ROW_GAP + CONTENT_PADDING);
     }
 
     private void renderTitleBar(DrawContext graphics, TextRenderer font, CategoryPanel panel, int mouseX, int mouseY) {
         graphics.fill(panel.x, panel.y, panel.x + PANEL_WIDTH, panel.y + TITLE_BAR_HEIGHT, theme.titleBar);
-        graphics.fill(panel.x, panel.y, panel.x + PANEL_WIDTH, panel.y + 1, 0x44FFFFFF);
+        graphics.fill(panel.x, panel.y, panel.x + PANEL_WIDTH, panel.y + 1, 0x55FFFFFF);
+        graphics.fill(panel.x, panel.y + TITLE_BAR_HEIGHT - 1, panel.x + PANEL_WIDTH, panel.y + TITLE_BAR_HEIGHT,
+                0x22000000 | (theme.moduleEnabled & 0x00FFFFFF));
 
         graphics.getMatrices().pushMatrix();
-        graphics.getMatrices().translate(panel.x + 3 * SCALE, panel.y + 2 * SCALE);
+        graphics.getMatrices().translate(panel.x + 5 * SCALE, panel.y + 3 * SCALE);
         graphics.getMatrices().scale(SCALE, SCALE);
         drawGuiText(graphics, font, panel.category.name(), 0, 0, 0xFFFFFFFF, false);
         graphics.getMatrices().popMatrix();
 
-        int collapseX = panel.x + PANEL_WIDTH - (int)(12 * SCALE);
+        int collapseX = panel.x + PANEL_WIDTH - (int)(11 * SCALE);
         graphics.getMatrices().pushMatrix();
-        graphics.getMatrices().translate(collapseX, panel.y + 2 * SCALE);
+        graphics.getMatrices().translate(collapseX, panel.y + 3 * SCALE);
         graphics.getMatrices().scale(SCALE, SCALE);
         drawGuiText(graphics, font, panel.collapsed ? "+" : "-", 0, 0, 0xFFAAAAAA, false);
         graphics.getMatrices().popMatrix();
@@ -123,17 +138,20 @@ public class PanelRenderer {
     private void renderPanelBackground(DrawContext graphics, CategoryPanel panel, int actualHeight) {
         graphics.fill(panel.x, panel.y + TITLE_BAR_HEIGHT, panel.x + PANEL_WIDTH, panel.y + actualHeight, theme.panelBackground);
         graphics.fill(panel.x, panel.y + TITLE_BAR_HEIGHT, panel.x + PANEL_WIDTH, panel.y + TITLE_BAR_HEIGHT + 1, 0x22FFFFFF);
+        graphics.fill(panel.x, panel.y + actualHeight - 1, panel.x + PANEL_WIDTH, panel.y + actualHeight, 0x20000000);
+        graphics.fill(panel.x, panel.y, panel.x + 1, panel.y + actualHeight, 0x18000000);
+        graphics.fill(panel.x + PANEL_WIDTH - 1, panel.y, panel.x + PANEL_WIDTH, panel.y + actualHeight, 0x18000000);
     }
 
     private String renderModules(DrawContext graphics, TextRenderer font, CategoryPanel panel, List<Module> modules, int mouseX, int mouseY) {
         String hoveredDescription = null;
-        int yOffset = panel.y + TITLE_BAR_HEIGHT + 2;
+        int yOffset = panel.y + TITLE_BAR_HEIGHT + CONTENT_PADDING;
 
         for (Module module : modules) {
             String desc = renderModule(graphics, font, panel, module, yOffset, mouseX, mouseY);
             if (desc != null) hoveredDescription = desc;
 
-            yOffset += MODULE_HEIGHT;
+            yOffset += MODULE_HEIGHT + ROW_GAP;
             if (module.isExtended()) {
                 yOffset = renderSettings(graphics, font, panel, module.getSettings(), yOffset, mouseX, mouseY);
             }
@@ -144,24 +162,29 @@ public class PanelRenderer {
 
     private String renderModule(DrawContext graphics, TextRenderer font, CategoryPanel panel, Module module, int yOffset, int mouseX, int mouseY) {
         int moduleColor = module.isEnabled() ? theme.moduleEnabled : theme.moduleDisabled;
-        int x1 = panel.x, y1 = yOffset, x2 = panel.x + PANEL_WIDTH, y2 = yOffset + MODULE_HEIGHT;
+        int inset = Math.max(2, (int) (2 * SCALE));
+        int x1 = panel.x + inset, y1 = yOffset, x2 = panel.x + PANEL_WIDTH - inset, y2 = yOffset + MODULE_HEIGHT;
 
         boolean isModuleHovered = mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2;
         if (isModuleHovered) {
             graphics.fill(x1, y1, x2, y2, theme.hoverHighlight);
         }
 
+        if (module.isEnabled()) {
+            graphics.fill(x1, y1, x1 + Math.max(1, (int) SCALE), y2, theme.moduleEnabled);
+        }
+
         if (!module.getSettings().isEmpty()) {
             String indicator = module.isExtended() ? "^" : ">";
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(panel.x + PANEL_WIDTH - 8 * SCALE, yOffset + 1 * SCALE);
+            graphics.getMatrices().translate(panel.x + PANEL_WIDTH - 11 * SCALE, yOffset + 2 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, indicator, 0, 0, 0xFF888888, false);
             graphics.getMatrices().popMatrix();
         }
 
         graphics.getMatrices().pushMatrix();
-        graphics.getMatrices().translate(panel.x + 3 * SCALE, yOffset + 1 * SCALE);
+        graphics.getMatrices().translate(panel.x + 6 * SCALE, yOffset + 2 * SCALE);
         graphics.getMatrices().scale(SCALE, SCALE);
         drawGuiText(graphics, font, module.getName(), 0, 0, moduleColor, false);
         graphics.getMatrices().popMatrix();
@@ -187,7 +210,8 @@ public class PanelRenderer {
     }
 
     private int renderCategorySetting(DrawContext graphics, TextRenderer font, CategoryPanel panel, CategorySetting catSetting, int yOffset, int mouseX, int mouseY) {
-        int settingX1 = panel.x, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH, settingY2 = yOffset + SETTING_HEIGHT;
+        int inset = Math.max(2, (int) (2 * SCALE));
+        int settingX1 = panel.x + inset, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH - inset, settingY2 = yOffset + SETTING_HEIGHT;
 
         boolean isSettingHovered = mouseX >= settingX1 && mouseX <= settingX2 && mouseY >= settingY1 && mouseY <= settingY2;
         if (isSettingHovered) {
@@ -196,46 +220,46 @@ public class PanelRenderer {
 
         String catIndicator = catSetting.isExpanded() ? "^" : ">";
         graphics.getMatrices().pushMatrix();
-        graphics.getMatrices().translate(panel.x + PANEL_WIDTH - 8 * SCALE, yOffset + 1 * SCALE);
+        graphics.getMatrices().translate(panel.x + PANEL_WIDTH - 11 * SCALE, yOffset + 2 * SCALE);
         graphics.getMatrices().scale(SCALE, SCALE);
         drawGuiText(graphics, font, catIndicator, 0, 0, theme.moduleDisabled, false);
         graphics.getMatrices().popMatrix();
 
         graphics.getMatrices().pushMatrix();
-        graphics.getMatrices().translate(panel.x + 3 * SCALE, yOffset + 1 * SCALE);
+        graphics.getMatrices().translate(panel.x + 6 * SCALE, yOffset + 2 * SCALE);
         graphics.getMatrices().scale(SCALE, SCALE);
         drawGuiText(graphics, font, catSetting.getName(), 0, 0, theme.moduleEnabled, false);
         graphics.getMatrices().popMatrix();
 
-        yOffset += SETTING_HEIGHT;
+        yOffset += SETTING_HEIGHT + ROW_GAP;
 
         if (catSetting.isExpanded()) {
             for (Object catItem : catSetting.getSettings()) {
                 int catItemY1 = yOffset, catItemY2 = yOffset + SETTING_HEIGHT;
 
-                boolean isCatItemHovered = mouseX >= panel.x && mouseX <= panel.x + PANEL_WIDTH && mouseY >= catItemY1 && mouseY <= catItemY2;
+                boolean isCatItemHovered = mouseX >= panel.x + inset && mouseX <= panel.x + PANEL_WIDTH - inset && mouseY >= catItemY1 && mouseY <= catItemY2;
                 if (isCatItemHovered) {
-                    graphics.fill(panel.x, catItemY1, panel.x + PANEL_WIDTH, catItemY2, theme.hoverHighlight);
+                    graphics.fill(panel.x + inset, catItemY1, panel.x + PANEL_WIDTH - inset, catItemY2, theme.hoverHighlight);
                 }
 
                 if (catItem instanceof BooleanSetting boolSetting) {
                     renderBooleanSetting(graphics, font, panel, boolSetting, yOffset, mouseX, mouseY, 8);
-                    yOffset += SETTING_HEIGHT;
+                    yOffset += SETTING_HEIGHT + ROW_GAP;
                 } else if (catItem instanceof NumberSetting numSetting) {
                     renderNumberSetting(graphics, font, panel, numSetting, yOffset, mouseX, mouseY, 8);
-                    yOffset += SETTING_HEIGHT;
+                    yOffset += SETTING_HEIGHT + ROW_GAP;
                 } else if (catItem instanceof StringSetting strSetting) {
                     String displayValue = strSetting.getValue();
                     String label = strSetting.getName() + ": \"" + displayValue + "\"";
                     graphics.getMatrices().pushMatrix();
-                    graphics.getMatrices().translate(panel.x + 8 * SCALE, yOffset + 2 * SCALE);
+                    graphics.getMatrices().translate(panel.x + 10 * SCALE, yOffset + 2 * SCALE);
                     graphics.getMatrices().scale(SCALE, SCALE);
                     drawGuiText(graphics, font, label, 0, 0, 0xFFFFFFFF, false);
                     graphics.getMatrices().popMatrix();
-                    yOffset += SETTING_HEIGHT;
+                    yOffset += SETTING_HEIGHT + ROW_GAP;
                 } else if (catItem instanceof RadioSetting radioSetting) {
                     renderRadioSetting(graphics, font, panel, radioSetting, yOffset, mouseX, mouseY, 8);
-                    yOffset += SETTING_HEIGHT;
+                    yOffset += SETTING_HEIGHT + ROW_GAP;
                 }
             }
         }
@@ -244,7 +268,8 @@ public class PanelRenderer {
     }
 
     private int renderBooleanSetting(DrawContext graphics, TextRenderer font, CategoryPanel panel, BooleanSetting boolSetting, int yOffset, int mouseX, int mouseY, int indent) {
-        int settingX1 = panel.x, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH, settingY2 = yOffset + SETTING_HEIGHT;
+        int inset = Math.max(2, (int) (2 * SCALE));
+        int settingX1 = panel.x + inset, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH - inset, settingY2 = yOffset + SETTING_HEIGHT;
 
         boolean isSettingHovered = mouseX >= settingX1 && mouseX <= settingX2 && mouseY >= settingY1 && mouseY <= settingY2;
         if (isSettingHovered && indent == 3) {
@@ -252,7 +277,7 @@ public class PanelRenderer {
         }
 
         int textColor = boolSetting.isEnabled() ? theme.moduleEnabled : 0xFFFFFFFF;
-        float indicatorX = panel.x + indent * SCALE;
+        float indicatorX = panel.x + (indent + 2) * SCALE;
         float indicatorWidth = 0;
 
         String settingName = boolSetting.getName();
@@ -274,27 +299,28 @@ public class PanelRenderer {
             String scrollText = settingName + "  " + settingName + "  " + settingName;
 
             int scissorX1 = (int)(indicatorX + indicatorWidth + 4 * SCALE);
-            int scissorX2 = (int)(panel.x + PANEL_WIDTH - 3 * SCALE);
+            int scissorX2 = (int)(panel.x + PANEL_WIDTH - 6 * SCALE);
             graphics.enableScissor(scissorX1, yOffset, scissorX2, yOffset + SETTING_HEIGHT);
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(indicatorX + indicatorWidth + 4 * SCALE - offset * SCALE, yOffset + 2 * SCALE);
+            graphics.getMatrices().translate(indicatorX + indicatorWidth + 4 * SCALE - offset * SCALE, yOffset + 3 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, scrollText, 0, 0, textColor, false);
             graphics.getMatrices().popMatrix();
             graphics.disableScissor();
         } else {
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(indicatorX + indicatorWidth + 4 * SCALE, yOffset + 2 * SCALE);
+            graphics.getMatrices().translate(indicatorX + indicatorWidth + 4 * SCALE, yOffset + 3 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, settingName, 0, 0, textColor, false);
             graphics.getMatrices().popMatrix();
         }
 
-        return yOffset + SETTING_HEIGHT;
+        return yOffset + SETTING_HEIGHT + ROW_GAP;
     }
 
     private int renderNumberSetting(DrawContext graphics, TextRenderer font, CategoryPanel panel, NumberSetting numSetting, int yOffset, int mouseX, int mouseY, int indent) {
-        int settingX1 = panel.x, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH, settingY2 = yOffset + SETTING_HEIGHT;
+        int inset = Math.max(2, (int) (2 * SCALE));
+        int settingX1 = panel.x + inset, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH - inset, settingY2 = yOffset + SETTING_HEIGHT;
 
         boolean isSettingHovered = mouseX >= settingX1 && mouseX <= settingX2 && mouseY >= settingY1 && mouseY <= settingY2;
         if (isSettingHovered && indent == 3) {
@@ -304,9 +330,9 @@ public class PanelRenderer {
         float range = numSetting.getMax() - numSetting.getMin();
         int barWidth = (int) ((numSetting.getValue() - numSetting.getMin()) / range * (PANEL_WIDTH - indent * SCALE - 7 * SCALE));
 
-        int sliderY = yOffset + (int)(10 * SCALE);
-        graphics.fill(panel.x + (int)(indent * SCALE), sliderY, panel.x + PANEL_WIDTH - (int)(3 * SCALE), sliderY + Math.max(1, (int)SCALE), theme.sliderBackground);
-        graphics.fill(panel.x + (int)(indent * SCALE), sliderY, panel.x + (int)(indent * SCALE) + barWidth, sliderY + Math.max(1, (int)SCALE), theme.sliderForeground);
+        int sliderY = yOffset + (int)(11 * SCALE);
+        graphics.fill(panel.x + (int)((indent + 2) * SCALE), sliderY, panel.x + PANEL_WIDTH - (int)(6 * SCALE), sliderY + Math.max(1, (int)SCALE), theme.sliderBackground);
+        graphics.fill(panel.x + (int)((indent + 2) * SCALE), sliderY, panel.x + (int)((indent + 2) * SCALE) + barWidth, sliderY + Math.max(1, (int)SCALE), theme.sliderForeground);
 
         String label = numSetting.getName() + ": " + String.format("%.1f", numSetting.getValue());
         int maxWidth = (int)((PANEL_WIDTH - indent * SCALE - 7 * SCALE) / SCALE);
@@ -327,27 +353,28 @@ public class PanelRenderer {
             String scrollText = label + "  " + label + "  " + label;
 
             int scissorX1 = panel.x + (int)(indent * SCALE);
-            int scissorX2 = panel.x + PANEL_WIDTH - (int)(3 * SCALE);
+            int scissorX2 = panel.x + PANEL_WIDTH - (int)(6 * SCALE);
             graphics.enableScissor(scissorX1, yOffset, scissorX2, yOffset + SETTING_HEIGHT);
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(panel.x + indent * SCALE - offset * SCALE, yOffset + 1 * SCALE);
+            graphics.getMatrices().translate(panel.x + (indent + 2) * SCALE - offset * SCALE, yOffset + 2 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, scrollText, 0, 0, 0xFFFFFFFF, false);
             graphics.getMatrices().popMatrix();
             graphics.disableScissor();
         } else {
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(panel.x + indent * SCALE, yOffset + 1 * SCALE);
+            graphics.getMatrices().translate(panel.x + (indent + 2) * SCALE, yOffset + 2 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, label, 0, 0, 0xFFFFFFFF, false);
             graphics.getMatrices().popMatrix();
         }
 
-        return yOffset + SETTING_HEIGHT;
+        return yOffset + SETTING_HEIGHT + ROW_GAP;
     }
 
     private int renderStringSetting(DrawContext graphics, TextRenderer font, CategoryPanel panel, StringSetting strSetting, int yOffset, int mouseX, int mouseY) {
-        int settingX1 = panel.x, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH, settingY2 = yOffset + SETTING_HEIGHT;
+        int inset = Math.max(2, (int) (2 * SCALE));
+        int settingX1 = panel.x + inset, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH - inset, settingY2 = yOffset + SETTING_HEIGHT;
 
         boolean isSettingHovered = mouseX >= settingX1 && mouseX <= settingX2 && mouseY >= settingY1 && mouseY <= settingY2;
         if (isSettingHovered) {
@@ -374,27 +401,28 @@ public class PanelRenderer {
             String scrollText = label + "  " + label + "  " + label;
 
             int scissorX1 = panel.x + (int)(3 * SCALE);
-            int scissorX2 = panel.x + PANEL_WIDTH - (int)(3 * SCALE);
+            int scissorX2 = panel.x + PANEL_WIDTH - (int)(6 * SCALE);
             graphics.enableScissor(scissorX1, yOffset, scissorX2, yOffset + SETTING_HEIGHT);
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(panel.x + 3 * SCALE - offset * SCALE, yOffset + 2 * SCALE);
+            graphics.getMatrices().translate(panel.x + 5 * SCALE - offset * SCALE, yOffset + 3 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, scrollText, 0, 0, 0xFFFFFFFF, false);
             graphics.getMatrices().popMatrix();
             graphics.disableScissor();
         } else {
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(panel.x + 3 * SCALE, yOffset + 2 * SCALE);
+            graphics.getMatrices().translate(panel.x + 5 * SCALE, yOffset + 3 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, label, 0, 0, 0xFFFFFFFF, false);
             graphics.getMatrices().popMatrix();
         }
 
-        return yOffset + SETTING_HEIGHT;
+        return yOffset + SETTING_HEIGHT + ROW_GAP;
     }
 
     private int renderRadioSetting(DrawContext graphics, TextRenderer font, CategoryPanel panel, RadioSetting radioSetting, int yOffset, int mouseX, int mouseY, int indent) {
-        int settingX1 = panel.x, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH, settingY2 = yOffset + SETTING_HEIGHT;
+        int inset = Math.max(2, (int) (2 * SCALE));
+        int settingX1 = panel.x + inset, settingY1 = yOffset, settingX2 = panel.x + PANEL_WIDTH - inset, settingY2 = yOffset + SETTING_HEIGHT;
 
         boolean isSettingHovered = mouseX >= settingX1 && mouseX <= settingX2 && mouseY >= settingY1 && mouseY <= settingY2;
         if (isSettingHovered && indent == 3) {
@@ -404,7 +432,7 @@ public class PanelRenderer {
         String selected = radioSetting.getSelectedOption();
         int indicatorColor = theme.moduleEnabled;
         String indicatorText = ">";
-        float indicatorX = panel.x + indent * SCALE;
+        float indicatorX = panel.x + (indent + 2) * SCALE;
 
         graphics.getMatrices().pushMatrix();
         graphics.getMatrices().translate(indicatorX, yOffset + 2 * SCALE);
@@ -431,23 +459,23 @@ public class PanelRenderer {
             String scrollText = label + "  " + label + "  " + label;
 
             int scissorX1 = (int)(indicatorX + 12 * SCALE);
-            int scissorX2 = panel.x + PANEL_WIDTH - (int)(3 * SCALE);
+            int scissorX2 = panel.x + PANEL_WIDTH - (int)(6 * SCALE);
             graphics.enableScissor(scissorX1, yOffset, scissorX2, yOffset + SETTING_HEIGHT);
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(indicatorX + 12 * SCALE - offset * SCALE, yOffset + 2 * SCALE);
+            graphics.getMatrices().translate(indicatorX + 12 * SCALE - offset * SCALE, yOffset + 3 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, scrollText, 0, 0, 0xFFFFFFFF, false);
             graphics.getMatrices().popMatrix();
             graphics.disableScissor();
         } else {
             graphics.getMatrices().pushMatrix();
-            graphics.getMatrices().translate(indicatorX + 12 * SCALE, yOffset + 2 * SCALE);
+            graphics.getMatrices().translate(indicatorX + 12 * SCALE, yOffset + 3 * SCALE);
             graphics.getMatrices().scale(SCALE, SCALE);
             drawGuiText(graphics, font, label, 0, 0, 0xFFFFFFFF, false);
             graphics.getMatrices().popMatrix();
         }
 
-        return yOffset + SETTING_HEIGHT;
+        return yOffset + SETTING_HEIGHT + ROW_GAP;
     }
 
     private void drawGuiText(

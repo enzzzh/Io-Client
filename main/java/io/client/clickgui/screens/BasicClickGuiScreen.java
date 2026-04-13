@@ -28,9 +28,12 @@ import java.util.Map;
 
 public class BasicClickGuiScreen extends Screen {
 
-    private static final int PANEL_WIDTH   = 90;
-    private static final int HEADER_HEIGHT = 14;
-    private static final int ROW_HEIGHT    = 13;
+    private static final int PANEL_WIDTH   = 104;
+    private static final int HEADER_HEIGHT = 16;
+    private static final int ROW_HEIGHT    = 14;
+    private static final int PANEL_PADDING = 4;
+    private static final int ROW_GAP       = 2;
+    private static final int ROW_INSET     = 2;
     private static final float SCROLL_SPEED = 0.4f;
     private static final int SCROLL_GAP    = 20;
 
@@ -57,7 +60,7 @@ public class BasicClickGuiScreen extends Screen {
                 p.open = !cfg.collapsed;
             } else {
                 p = new Panel(category, defaultX, 5);
-                defaultX += PANEL_WIDTH + 4;
+                defaultX += PANEL_WIDTH + 8;
             }
             panels.add(p);
         }
@@ -323,7 +326,7 @@ public class BasicClickGuiScreen extends Screen {
 
         int bodyHeight() {
             if (!open) return 0;
-            int h = 0;
+            int h = PANEL_PADDING;
             for (ModuleRow r : rows) h += r.totalHeight();
             return h;
         }
@@ -340,28 +343,28 @@ public class BasicClickGuiScreen extends Screen {
 
             ctx.fill(x, y, x + PANEL_WIDTH, y + totalH, (theme.panelBackground & 0x00FFFFFF) | 0x66000000);
 
-            ctx.fill(x + 1, y, x + PANEL_WIDTH - 1, y + 1, 0x33FFFFFF);
-            ctx.fill(x + 1, y + totalH - 1, x + PANEL_WIDTH - 1, y + totalH, 0x33FFFFFF);
-            ctx.fill(x, y, x + 1, y + totalH, 0x33FFFFFF);
-            ctx.fill(x + PANEL_WIDTH - 1, y, x + PANEL_WIDTH, y + totalH, 0x33FFFFFF);
+            ctx.fill(x + 1, y, x + PANEL_WIDTH - 1, y + 1, 0x44FFFFFF);
+            ctx.fill(x + 1, y + totalH - 1, x + PANEL_WIDTH - 1, y + totalH, 0x22000000);
+            ctx.fill(x, y, x + 1, y + totalH, 0x22000000);
+            ctx.fill(x + PANEL_WIDTH - 1, y, x + PANEL_WIDTH, y + totalH, 0x22000000);
 
-            ctx.fill(x, y, x + PANEL_WIDTH, y + HEADER_HEIGHT, theme.moduleEnabled);
-            ctx.fill(x + 1, y + 1, x + PANEL_WIDTH - 1, y + 2, 0x33FFFFFF);
-            ctx.fill(x + 1, y + HEADER_HEIGHT - 1, x + PANEL_WIDTH - 1, y + HEADER_HEIGHT, 0x22000000);
+            ctx.fill(x, y, x + PANEL_WIDTH, y + HEADER_HEIGHT, theme.titleBar);
+            ctx.fill(x + 1, y, x + PANEL_WIDTH - 1, y + 1, 0x55FFFFFF);
+            ctx.fill(x + 1, y + HEADER_HEIGHT - 1, x + PANEL_WIDTH - 1, y + HEADER_HEIGHT,
+                    0x33000000 | (theme.moduleEnabled & 0x00FFFFFF));
 
             boolean hov = overHeader(mx, my);
             if (hov) ctx.fill(x, y, x + PANEL_WIDTH, y + HEADER_HEIGHT, theme.hoverHighlight);
 
-            int centerX = x + (PANEL_WIDTH - textRenderer.getWidth(category.name())) / 2;
-            int centerY = y + (HEADER_HEIGHT - 8) / 2;
-            ctx.drawTextWithShadow(textRenderer, category.name(), centerX, centerY, 0xFFFFFFFF);
+            int titleY = y + 4;
+            ctx.drawTextWithShadow(textRenderer, category.name(), x + 5, titleY, 0xFFFFFFFF);
 
             String openStr = open ? "\u2212" : "\u002B";
-            ctx.drawTextWithShadow(textRenderer, openStr, x + PANEL_WIDTH - textRenderer.getWidth(openStr) - 3, centerY, 0xFFFFFFFF);
+            ctx.drawTextWithShadow(textRenderer, openStr, x + PANEL_WIDTH - textRenderer.getWidth(openStr) - 5, titleY, 0xFFFFFFFF);
 
             if (!open) return;
 
-            int ry = y + HEADER_HEIGHT;
+            int ry = y + HEADER_HEIGHT + PANEL_PADDING;
             for (ModuleRow r : rows) {
                 r.render(ctx, mx, my, x, ry, PANEL_WIDTH, theme);
                 ry += r.totalHeight();
@@ -375,7 +378,7 @@ public class BasicClickGuiScreen extends Screen {
                 return;
             }
             if (!open) return;
-            int ry = y + HEADER_HEIGHT;
+            int ry = y + HEADER_HEIGHT + PANEL_PADDING;
             for (ModuleRow r : rows) {
                 r.mouseClicked(mx, my, btn, x, ry, PANEL_WIDTH);
                 ry += r.totalHeight();
@@ -385,7 +388,7 @@ public class BasicClickGuiScreen extends Screen {
         void mouseReleased(int mx, int my, int btn) {
             if (btn == 0) dragging = false;
             if (!open) return;
-            int ry = y + HEADER_HEIGHT;
+            int ry = y + HEADER_HEIGHT + PANEL_PADDING;
             for (ModuleRow r : rows) {
                 r.mouseReleased(mx, my, btn, x, ry, PANEL_WIDTH);
                 ry += r.totalHeight();
@@ -423,14 +426,16 @@ public class BasicClickGuiScreen extends Screen {
         }
 
         int totalHeight() {
-            if (!open || settingRows.isEmpty()) return ROW_HEIGHT;
+            if (!open || settingRows.isEmpty()) return ROW_HEIGHT + ROW_GAP;
             int h = ROW_HEIGHT;
             for (SettingRow r : settingRows) h += r.height();
-            return h;
+            return h + ROW_GAP;
         }
 
         void render(DrawContext ctx, int mx, int my, int px, int py, int pw, Theme theme) {
-            boolean hov = mx >= px && mx <= px + pw && my >= py && my <= py + ROW_HEIGHT;
+            int x1 = px + ROW_INSET;
+            int x2 = px + pw - ROW_INSET;
+            boolean hov = mx >= x1 && mx <= x2 && my >= py && my <= py + ROW_HEIGHT;
 
             String name = module.getName();
             boolean searchMatch = !searchQuery.isEmpty() && name.toLowerCase().contains(searchQuery.toLowerCase());
@@ -445,40 +450,37 @@ public class BasicClickGuiScreen extends Screen {
                 bg = (theme.panelBackground & 0x00FFFFFF) | 0xAA000000;
             }
 
-            ctx.fill(px, py, px + pw, py + ROW_HEIGHT, bg);
-            if (hov) ctx.fill(px, py, px + pw, py + ROW_HEIGHT, theme.hoverHighlight);
+            ctx.fill(x1, py, x2, py + ROW_HEIGHT, bg);
+            if (hov) ctx.fill(x1, py, x2, py + ROW_HEIGHT, theme.hoverHighlight);
 
             if (module.isEnabled()) {
-                ctx.fill(px + 1, py, px + pw - 1, py + 1, theme.sliderForeground);
-                ctx.fill(px + 1, py + ROW_HEIGHT - 1, px + pw - 1, py + ROW_HEIGHT, theme.sliderForeground);
-                ctx.fill(px, py, px + 1, py + ROW_HEIGHT, theme.sliderForeground);
-                ctx.fill(px + pw - 1, py, px + pw, py + ROW_HEIGHT, theme.sliderForeground);
+                ctx.fill(x1, py, x1 + 2, py + ROW_HEIGHT, theme.sliderForeground);
             }
 
-            ctx.fill(px, py + ROW_HEIGHT - 1, px + pw, py + ROW_HEIGHT, (theme.panelBackground & 0x00FFFFFF) | 0x18000000);
+            ctx.fill(x1, py + ROW_HEIGHT - 1, x2, py + ROW_HEIGHT, (theme.panelBackground & 0x00FFFFFF) | 0x18000000);
 
             int textColor = searchMatch ? theme.sliderForeground : (module.isEnabled() ? 0xFFFFFFFF : theme.moduleDisabled);
 
-            int textRight = px + pw - 3;
+            int textRight = x2 - 4;
             if (hasSettings) {
                 String indicator = open ? "\u2212" : "\u002B";
                 int indColor = (theme.moduleDisabled & 0x00FFFFFF) | 0xBB000000;
-                ctx.drawTextWithShadow(textRenderer, indicator, px + pw - textRenderer.getWidth(indicator) - 3, py + 2, indColor);
-                textRight = px + pw - textRenderer.getWidth(indicator) - 6;
+                ctx.drawTextWithShadow(textRenderer, indicator, x2 - textRenderer.getWidth(indicator) - 4, py + 3, indColor);
+                textRight = x2 - textRenderer.getWidth(indicator) - 8;
             }
 
-            drawScrollable(ctx, "mod:" + module.getName(), name, px + 3, py + 2, px + 3, textRight, textColor, hov);
+            drawScrollable(ctx, "mod:" + module.getName(), name, x1 + 5, py + 3, x1 + 5, textRight, textColor, hov);
 
             if (!open) return;
             int sy = py + ROW_HEIGHT;
             for (SettingRow r : settingRows) {
-                r.render(ctx, mx, my, px + 1, sy, pw - 2, theme);
+                r.render(ctx, mx, my, px + ROW_INSET, sy, pw - ROW_INSET * 2, theme);
                 sy += r.height();
             }
         }
 
         void mouseClicked(int mx, int my, int btn, int px, int py, int pw) {
-            if (mx >= px && mx <= px + pw && my >= py && my <= py + ROW_HEIGHT) {
+            if (mx >= px + ROW_INSET && mx <= px + pw - ROW_INSET && my >= py && my <= py + ROW_HEIGHT) {
                 if (btn == 0) { module.toggle(); click(); }
                 else if (btn == 1 && !settingRows.isEmpty()) { open = !open; click(); }
                 return;
@@ -486,7 +488,7 @@ public class BasicClickGuiScreen extends Screen {
             if (!open) return;
             int sy = py + ROW_HEIGHT;
             for (SettingRow r : settingRows) {
-                r.mouseClicked(mx, my, btn, px + 1, sy, pw - 2);
+                r.mouseClicked(mx, my, btn, px + ROW_INSET, sy, pw - ROW_INSET * 2);
                 sy += r.height();
             }
         }
@@ -495,7 +497,7 @@ public class BasicClickGuiScreen extends Screen {
             if (!open) return;
             int sy = py + ROW_HEIGHT;
             for (SettingRow r : settingRows) {
-                r.mouseReleased(mx, my, btn, px + 1, sy, pw - 2);
+                r.mouseReleased(mx, my, btn, px + ROW_INSET, sy, pw - ROW_INSET * 2);
                 sy += r.height();
             }
         }
@@ -507,9 +509,9 @@ public class BasicClickGuiScreen extends Screen {
         abstract void render(DrawContext ctx, int mx, int my, int x, int y, int w, Theme theme);
         void mouseClicked(int mx, int my, int btn, int x, int y, int w) {}
         void mouseReleased(int mx, int my, int btn, int x, int y, int w) {}
-        int height() { return ROW_HEIGHT; }
+        int height() { return ROW_HEIGHT + ROW_GAP; }
         boolean over(int mx, int my, int x, int y, int w) {
-            return mx >= x && mx <= x + w && my >= y && my <= y + height();
+            return mx >= x && mx <= x + w && my >= y && my <= y + ROW_HEIGHT;
         }
         void scroll(DrawContext ctx, String key, String text, int x, int y, int x1, int x2, int color, boolean hov) {
             drawScrollable(ctx, key, text, x, y, x1, x2, color, hov);
@@ -527,7 +529,8 @@ public class BasicClickGuiScreen extends Screen {
             ctx.fill(x, y, x + w, y + ROW_HEIGHT, bg);
             if (hov) ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.hoverHighlight);
             int textColor = setting.isEnabled() ? 0xFFFFFFFF : theme.moduleDisabled;
-            scroll(ctx, "bool:" + System.identityHashCode(this), setting.getName(), x + 3 + indent, y + 2, x + 3 + indent, x + w - 3, textColor, hov);
+            if (setting.isEnabled()) ctx.fill(x, y, x + 2, y + ROW_HEIGHT, theme.sliderForeground);
+            scroll(ctx, "bool:" + System.identityHashCode(this), setting.getName(), x + 5 + indent, y + 3, x + 5 + indent, x + w - 4, textColor, hov);
         }
 
         @Override
@@ -546,7 +549,7 @@ public class BasicClickGuiScreen extends Screen {
             ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.panelBackground);
             if (hov) ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.hoverHighlight);
             String label = setting.getName() + ": " + setting.getSelectedOption();
-            scroll(ctx, "radio:" + System.identityHashCode(this), label, x + 3 + indent, y + 2, x + 3 + indent, x + w - 3, theme.moduleDisabled, hov);
+            scroll(ctx, "radio:" + System.identityHashCode(this), label, x + 5 + indent, y + 3, x + 5 + indent, x + w - 4, theme.moduleDisabled, hov);
         }
 
         @Override
@@ -576,16 +579,16 @@ public class BasicClickGuiScreen extends Screen {
             ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.panelBackground);
             if (hov) ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.hoverHighlight);
 
-            int trackX = x + 2 + indent;
-            int trackW = w - 4 - indent;
+            int trackX = x + 4 + indent;
+            int trackW = w - 8 - indent;
             float norm = (setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
             int fillW = (int)(norm * trackW);
 
-            ctx.fill(trackX, y + ROW_HEIGHT - 2, trackX + trackW, y + ROW_HEIGHT - 1, theme.sliderBackground);
-            ctx.fill(trackX, y + ROW_HEIGHT - 2, trackX + fillW, y + ROW_HEIGHT - 1, theme.sliderForeground);
+            ctx.fill(trackX, y + ROW_HEIGHT - 3, trackX + trackW, y + ROW_HEIGHT - 1, theme.sliderBackground);
+            ctx.fill(trackX, y + ROW_HEIGHT - 3, trackX + fillW, y + ROW_HEIGHT - 1, theme.sliderForeground);
 
             String label = setting.getName() + ": " + fmt(setting.getValue());
-            scroll(ctx, "num:" + System.identityHashCode(this), label, x + 3 + indent, y + 2, x + 3 + indent, x + w - 3, theme.moduleDisabled, hov);
+            scroll(ctx, "num:" + System.identityHashCode(this), label, x + 5 + indent, y + 3, x + 5 + indent, x + w - 4, theme.moduleDisabled, hov);
 
             if (dragging) applyMouse(mx, x, w);
         }
@@ -601,8 +604,8 @@ public class BasicClickGuiScreen extends Screen {
         }
 
         void applyMouse(int mx, int x, int w) {
-            int trackX = x + 2 + indent;
-            int trackW = w - 4 - indent;
+            int trackX = x + 4 + indent;
+            int trackW = w - 8 - indent;
             float t = Math.max(0f, Math.min(1f, (mx - trackX) / (float) trackW));
             setting.setValue(setting.getMin() + (setting.getMax() - setting.getMin()) * t);
         }
@@ -618,7 +621,7 @@ public class BasicClickGuiScreen extends Screen {
             ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.panelBackground);
             if (hov) ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.hoverHighlight);
             String label = setting.getName() + ": \"" + setting.getValue() + "\"";
-            scroll(ctx, "str:" + System.identityHashCode(this), label, x + 3 + indent, y + 2, x + 3 + indent, x + w - 3, theme.moduleDisabled, hov);
+            scroll(ctx, "str:" + System.identityHashCode(this), label, x + 5 + indent, y + 3, x + 5 + indent, x + w - 4, theme.moduleDisabled, hov);
         }
     }
 
@@ -635,10 +638,10 @@ public class BasicClickGuiScreen extends Screen {
 
         @Override
         int height() {
-            if (!open) return ROW_HEIGHT;
+            if (!open) return ROW_HEIGHT + ROW_GAP;
             int h = ROW_HEIGHT;
             for (SettingRow r : children) h += r.height();
-            return h;
+            return h + ROW_GAP;
         }
 
         @Override
@@ -647,10 +650,10 @@ public class BasicClickGuiScreen extends Screen {
             ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.panelBackground);
             if (hov) ctx.fill(x, y, x + w, y + ROW_HEIGHT, theme.hoverHighlight);
 
-            ctx.fill(x, y, x + 1, y + ROW_HEIGHT, theme.moduleEnabled);
+            ctx.fill(x, y, x + 2, y + ROW_HEIGHT, theme.moduleEnabled);
 
             String label = (open ? "- " : "+ ") + setting.getName();
-            scroll(ctx, "cat:" + System.identityHashCode(this), label, x + 5 + indent, y + 2, x + 5 + indent, x + w - 3, theme.sliderForeground, hov);
+            scroll(ctx, "cat:" + System.identityHashCode(this), label, x + 7 + indent, y + 3, x + 7 + indent, x + w - 4, theme.sliderForeground, hov);
 
             if (!open) return;
             int sy = y + ROW_HEIGHT;

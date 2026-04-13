@@ -50,8 +50,10 @@ public class InputHandler {
         int titleBarHeight = PanelRenderer.getTitleBarHeight();
         int moduleHeight = PanelRenderer.getModuleHeight();
         int panelWidth = PanelRenderer.getPanelWidth();
+        int contentPadding = PanelRenderer.getContentPadding();
+        int rowGap = PanelRenderer.getRowGap();
 
-        int yOffset = panel.y + titleBarHeight + 2;
+        int yOffset = panel.y + titleBarHeight + contentPadding;
         List<Module> modules = ModuleManager.INSTANCE.getModulesByCategory(panel.category);
 
         for (Module module : modules) {
@@ -70,7 +72,7 @@ public class InputHandler {
                 return true;
             }
 
-            yOffset += moduleHeight;
+            yOffset += moduleHeight + rowGap;
             if (module.isExtended()) {
                 int newYOffset = handleSettingsClick(panel, module.getSettings(), yOffset, mouseX, mouseY, button);
                 if (newYOffset == -1) return true;
@@ -84,6 +86,7 @@ public class InputHandler {
     private int handleSettingsClick(CategoryPanel panel, List<Setting> settings, int yOffset, double mouseX, double mouseY, int button) {
         int settingHeight = PanelRenderer.getSettingHeight();
         int panelWidth = PanelRenderer.getPanelWidth();
+        int rowGap = PanelRenderer.getRowGap();
 
         for (Setting setting : settings) {
             if (setting instanceof CategorySetting catSetting) {
@@ -97,7 +100,7 @@ public class InputHandler {
                     }
                 }
 
-                yOffset += settingHeight;
+                yOffset += settingHeight + rowGap;
                 if (catSetting.isExpanded()) {
                     for (Object catItem : catSetting.getSettings()) {
                         int catItemY1 = yOffset, catItemY2 = yOffset + settingHeight;
@@ -122,7 +125,7 @@ public class InputHandler {
                             }
                             return -1;
                         }
-                        yOffset += settingHeight;
+                        yOffset += settingHeight + rowGap;
                     }
                 }
             } else if (setting instanceof NumberSetting numSetting) {
@@ -136,7 +139,7 @@ public class InputHandler {
                     }
                     return -1;
                 }
-                yOffset += settingHeight;
+                yOffset += settingHeight + rowGap;
             } else if (setting instanceof BooleanSetting boolSetting) {
                 int settingY1 = yOffset, settingY2 = yOffset + settingHeight;
 
@@ -145,9 +148,9 @@ public class InputHandler {
                     ModuleManager.INSTANCE.saveModules();
                     return -1;
                 }
-                yOffset += settingHeight;
+                yOffset += settingHeight + rowGap;
             } else if (setting instanceof StringSetting) {
-                yOffset += settingHeight;
+                yOffset += settingHeight + rowGap;
             } else if (setting instanceof RadioSetting radioSetting) {
                 int settingY1 = yOffset, settingY2 = yOffset + settingHeight;
 
@@ -158,7 +161,7 @@ public class InputHandler {
                     }
                     return -1;
                 }
-                yOffset += settingHeight;
+                yOffset += settingHeight + rowGap;
             }
         }
 

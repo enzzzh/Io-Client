@@ -51,6 +51,7 @@ public class CommandManager {
         commands.put("bindlist", new BindListCommand());
         commands.put("macro", new MacroCommand());
         commands.put("ioswag", new IoSwagCommand());
+        commands.put("discord", new DiscordCommand());
 
     }
 

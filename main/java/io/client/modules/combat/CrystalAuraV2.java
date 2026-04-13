@@ -20,6 +20,7 @@ import net.minecraft.item.BowItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.consume.UseAction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -396,7 +397,7 @@ public class CrystalAuraV2 extends Module {
                         continue;
 
                     Vec3d crystalPos = Vec3d.ofCenter(pos).add(0, 1, 0);
-                    if (mc.player.getEyePos().distanceTo(crystalPos) > placeRange.getValue())
+                    if (mc.player.getEyePos().distanceTo(crystalPos) > obbyRange.getValue())
                         continue;
 
                     double targetDmg = DamageUtils.crystalDamage(target, crystalPos);
@@ -517,7 +518,9 @@ public class CrystalAuraV2 extends Module {
 
         Hand hand = offhand ? Hand.OFF_HAND : Hand.MAIN_HAND;
 
-        if (!mc.world.getBlockState(lower).isOf(Blocks.OBSIDIAN) && canPlaceProtectObsidian(mc, lower)) {
+        if (canSpendProtectedObsidian(mc)
+                && !mc.world.getBlockState(lower).isOf(Blocks.OBSIDIAN)
+                && canPlaceProtectObsidian(mc, lower)) {
             Vec3d hitVec = Vec3d.ofCenter(lower.down()).add(0, 1, 0);
             if (rotate.isEnabled()) applyRotation(mc, Vec3d.ofCenter(lower));
             BlockHitResult hit = new BlockHitResult(hitVec, Direction.UP, lower.down(), false);
@@ -526,7 +529,9 @@ public class CrystalAuraV2 extends Module {
             placedAny = true;
         }
 
-        if (!mc.world.getBlockState(upper).isOf(Blocks.OBSIDIAN) && canPlaceProtectObsidian(mc, upper)) {
+        if (canSpendProtectedObsidian(mc)
+                && !mc.world.getBlockState(upper).isOf(Blocks.OBSIDIAN)
+                && canPlaceProtectObsidian(mc, upper)) {
             Vec3d hitVec = Vec3d.ofCenter(upper.down()).add(0, 1, 0);
             if (rotate.isEnabled()) applyRotation(mc, Vec3d.ofCenter(upper));
             BlockHitResult hit = new BlockHitResult(hitVec, Direction.UP, upper.down(), false);
@@ -606,9 +611,13 @@ public class CrystalAuraV2 extends Module {
     private boolean shouldPause(MinecraftClient mc) {
         if (pauseMining.isEnabled() && mc.interactionManager.isBreakingBlock())
             return true;
-        if (pauseEating.isEnabled() && mc.player.isUsingItem())
+        if (pauseEating.isEnabled() && mc.player.isUsingItem() && isConsumableItem(mc.player.getActiveItem().getItem()))
             return true;
         return mc.player.getHealth() + mc.player.getAbsorptionAmount() < pauseHP.getValue();
+    }
+
+    private boolean canSpendProtectedObsidian(MinecraftClient mc) {
+        return !smartConserve.isEnabled() || countItem(mc, Items.OBSIDIAN) > keepObsidian.getValue();
     }
 
     private boolean shouldPauseForItem(MinecraftClient mc) {
@@ -618,6 +627,11 @@ public class CrystalAuraV2 extends Module {
         if (noGapSwitch.isEnabled() && (item == Items.GOLDEN_APPLE || item == Items.ENCHANTED_GOLDEN_APPLE))
             return true;
         return noBowSwitch.isEnabled() && item instanceof BowItem;
+    }
+
+    private boolean isConsumableItem(Item item) {
+        UseAction useAction = item.getUseAction(ItemStack.EMPTY);
+        return useAction == UseAction.EAT || useAction == UseAction.DRINK;
     }
 
     private int findCrystalSlot(MinecraftClient mc) {

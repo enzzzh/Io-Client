@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = 'indev'
+version = 'indev-1.6.0'
 group = 'io.client'
 base.archivesName = 'IoClient'
 
@@ -86,4 +86,3 @@ jar {
         rename { "${it}_${base.archivesName.get()}"}
     }
 }
-

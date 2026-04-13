@@ -1,15 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "io_client",
-  "version": "Indev V1.5",
+  "version": "Indev v1.6.0",
   "name": "Io Client",
   "description": "A fabric utility client mod made for anarchy servers.",
-  "authors": [
-    "Lev",
-    "Aureal",
-    "Prime",
-    "Enzo"
-  ],
+  "authors": ["Lev", "Aureal", "Prime", "Enzo"],
   "contact": {
     "sources": "https://github.com/gayskateboardwizard/Io-Client"
   },
@@ -17,13 +12,9 @@
   "icon": "logo.png",
   "environment": "*",
   "entrypoints": {
-    "client": [
-      "io.client.IoClientModClient"
-    ]
+    "client": ["io.client.IoClientModClient"]
   },
-  "mixins": [
-    "io_client.mixins.json"
-  ],
+  "mixins": ["io_client.mixins.json"],
   "accessWidener": "META-INF/io_client.accesswidener",
   "depends": {
     "fabricloader": ">=0.17.2",

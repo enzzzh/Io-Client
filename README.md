@@ -7,9 +7,12 @@ A lightweight Minecraft utility mod for Fabric 1.21.8.
 
 # Looks
 UI
-<img width="1920" height="1058" alt="image" src="https://github.com/user-attachments/assets/9f93cd8f-b1bd-4ce8-8842-27a0c1b809b0" />
-<img width="1920" height="1058" alt="image" src="https://github.com/user-attachments/assets/037ba7cc-4a21-4387-a1a4-47e68c090108" />
-<img width="1920" height="1056" alt="image" src="https://github.com/user-attachments/assets/e864bc60-1352-4a1c-af2e-6b3bc5ca8186" />
+<img width="1598" height="612" alt="image" src="https://github.com/user-attachments/assets/c544a15a-ce91-4886-971e-e16cbfa41a15" />
+
+<img width="1577" height="578" alt="image" src="https://github.com/user-attachments/assets/0aa180e1-e28e-44fe-b249-d4f297831af3" />
+
+<img width="1607" height="609" alt="image" src="https://github.com/user-attachments/assets/5281288c-7944-4993-8fc9-d03744e8ef5a" />
+
 Cape
 <img width="1920" height="1052" alt="image" src="https://github.com/user-attachments/assets/6a95b082-f273-4fcb-8cfb-4f32efd5139e" />
 
@@ -26,4 +29,3 @@ Macros and Binding
 I took some code (mainly) from the following clients:
 Meteor, Sn0w and thunderhack
 
-<img alt="image" src="https://cdn.discordapp.com/attachments/1455235908419846177/1473064659165646848/image.png?ex=6994d9de&is=6993885e&hm=5c6c5de9b7cb439e4b30db840707f8434dbe95833fce2e415c54a803654643f0&" />

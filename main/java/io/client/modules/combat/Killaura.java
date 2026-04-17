@@ -558,6 +558,7 @@ public class Killaura extends Module {
         ItemStack stack = mc.player.getMainHandStack();
         return stack.getItem().toString().toLowerCase().contains("sword") ||
                 stack.getItem().toString().toLowerCase().contains("axe") ||
+                stack.getItem().toString().toLowerCase().contains("spear") ||
                 stack.getItem() == Items.TRIDENT;
     }
 
@@ -581,7 +582,7 @@ public class Killaura extends Module {
 
             String itemName = stack.getItem().toString().toLowerCase();
             if (itemName.contains("sword") || itemName.contains("axe") ||
-                    stack.getItem() == Items.TRIDENT) {
+                    itemName.contains("spear") || stack.getItem() == Items.TRIDENT) {
                 return i;
             }
         }

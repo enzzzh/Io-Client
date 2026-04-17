@@ -3,7 +3,7 @@ package io.client.mixin;
 import com.mojang.authlib.GameProfile;
 import io.client.network.IoUserCapeService;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.util.SkinTextures;
+import net.minecraft.entity.player.SkinTextures;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

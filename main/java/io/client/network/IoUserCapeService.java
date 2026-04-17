@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.client.managers.ModuleManager;
 import io.client.modules.settings.CapeSettings;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.SkinTextures;
+import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.util.Identifier;
 
 public final class IoUserCapeService {

@@ -124,6 +124,12 @@ public class DamageUtils {
         if (entity == null)
             return 0.0f;
 
+        // Spear logic for 1.21.11 "Mounts of Mayhem"
+        if (entity.getAttacker() != null && entity.getAttacker().getMainHandStack().isOf(net.minecraft.item.Items.SPEAR)) {
+            float speed = (float) entity.getAttacker().getVelocity().length();
+            damage += speed * 5.0f;
+        }
+
         // Get armor value
         float armor = (float) entity.getArmor();
         float toughness = (float) entity

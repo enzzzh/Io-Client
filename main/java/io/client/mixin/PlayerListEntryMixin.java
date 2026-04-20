@@ -15,7 +15,7 @@ public abstract class PlayerListEntryMixin {
     @Shadow
     public abstract GameProfile getProfile();
 
-    @Inject(method = "getSkinTextures()Lnet/minecraft/client/util/SkinTextures;", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getSkinTextures", at = @At("RETURN"), cancellable = true)
     private void ioClient$injectIoCape(CallbackInfoReturnable<SkinTextures> cir) {
         GameProfile profile = getProfile();
         if (profile == null)
@@ -23,7 +23,7 @@ public abstract class PlayerListEntryMixin {
         SkinTextures original = cir.getReturnValue();
         if (original == null)
             return;
-        cir.setReturnValue(IoUserCapeService.withIoCapeIfEligible(profile.getName(), original));
+        cir.setReturnValue(IoUserCapeService.withIoCapeIfEligible(profile.name(), original));
     }
 }
 

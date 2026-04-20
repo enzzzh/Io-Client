@@ -40,7 +40,7 @@ public class DamageUtils {
         if (target == null || explosionPos == null || mc.world == null)
             return 0.0f;
 
-        Vec3d targetPos = target.getPos();
+        Vec3d targetPos = target.getEntityPos();
         Box targetBox = target.getBoundingBox();
 
         double distance = Math.sqrt(
@@ -124,12 +124,6 @@ public class DamageUtils {
         if (entity == null)
             return 0.0f;
 
-        // Spear logic for 1.21.11 "Mounts of Mayhem"
-        if (entity.getAttacker() != null && entity.getAttacker().getMainHandStack().isOf(net.minecraft.item.Items.SPEAR)) {
-            float speed = (float) entity.getAttacker().getVelocity().length();
-            damage += speed * 5.0f;
-        }
-
         // Get armor value
         float armor = (float) entity.getArmor();
         float toughness = (float) entity
@@ -182,7 +176,7 @@ public class DamageUtils {
                 if (entity instanceof EndCrystalEntity) {
                     double distance = player.squaredDistanceTo(entity);
                     if (distance < 144) { // 12 block range
-                        float damage = crystalDamage(player, entity.getPos());
+                        float damage = crystalDamage(player, entity.getEntityPos());
                         if (damage > maxDamage)
                             maxDamage = damage;
                     }
@@ -190,7 +184,7 @@ public class DamageUtils {
             }
 
             // Check for beds in nether/end by scanning nearby blocks.
-            if (!mc.world.getDimension().bedWorks()) {
+            if (!mc.world.getDimension().hasFixedTime() == false) {
                 BlockPos center = player.getBlockPos();
                 for (int x = -BED_SCAN_RADIUS; x <= BED_SCAN_RADIUS; x++) {
                     for (int y = -BED_SCAN_RADIUS; y <= BED_SCAN_RADIUS; y++) {

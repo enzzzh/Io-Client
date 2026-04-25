@@ -29,3 +29,4 @@ Macros and Binding
 I took some code (mainly) from the following clients:
 Meteor, Sn0w and thunderhack
 
+ts is so ass
